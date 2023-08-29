@@ -1,4 +1,3 @@
-import sys
 import csv
 from rectpack import newPacker
 import matplotlib.pyplot as plt
@@ -86,16 +85,21 @@ def plot_packer(bins, offset, material, packer):
         ax.add_patch(Rectangle((x, y), w, h,
                                edgecolor='orange',
                                facecolor='none',
-                               linewidth=2,
+                               linewidth=1,
                                ))
     return offset_rt + 1
 
 
 if __name__ == '__main__':
-    FILE = sys.argv[1]
-    QTY = int(sys.argv[2])
-    # print(FILE)
-    rects = read_file(FILE, QTY)
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--file", "-f", type=str, help="Input file.")
+    parser.add_argument("--qty", default=1, type=int, help="Multiple.")
+
+    args = parser.parse_args()
+
+    rects = read_file(args.file, args.qty)
     fig = plt.figure()
     packers = []
     bins = 0

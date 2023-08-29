@@ -28,8 +28,11 @@ Where:
   - More editable things...
 
 ```bash
-venv/bin/python monchocut.py cutlist.txt 5
+venv/bin/python monchocut.py --file cutlist.txt
 ```
 
-Where 5 is the number of the same list of cuts (this parameter
-must be higher than 0).
+If you want to replicate the same list 5 times:
+
+```bash
+venv/bin/python monchocut.py --file cutlist.txt --qty 5
+```
