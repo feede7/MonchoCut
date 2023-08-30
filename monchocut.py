@@ -121,13 +121,10 @@ if __name__ == '__main__':
         rects = {}
         for conf in yaml_conf.keys():
             element = yaml_conf[conf]
-            print('element', element)
             qty = 1
             for k in element:
-                print('k', k)
                 if 'path' in k:
                     file = k['path']
-                    print(file)
                 if 'qty' in k:
                     qty = k['qty']
             rects = read_file(file, rects=rects, mul=qty, extra_name=conf)
