@@ -2,12 +2,12 @@ import csv
 from rectpack import newPacker
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+import yaml
 
 
-def read_file(file, mul=1):
+def read_file(file, rects={}, mul=1):
     ESPESOR_SIERRA = 5
     assert mul > 0
-    rects = {}
     with open(file, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         for row in spamreader:
@@ -94,12 +94,44 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", "-f", type=str, help="Input file.")
-    parser.add_argument("--qty", default=1, type=int, help="Multiple.")
+    parser.add_argument("--file", type=str, default=None,
+                        help="Input file.")
+    parser.add_argument("--qty", type=int, default=None,
+                        help="Multiple.")
+    parser.add_argument("--yaml", type=str, default=None,
+                        help="Yaml conf.")
 
     args = parser.parse_args()
 
-    rects = read_file(args.file, args.qty)
+    if args.yaml is None:
+        assert args.file is not None
+        qty = args.qty or 1
+
+        print(args.file)
+        rects = read_file(args.file, mul=qty)
+    else:
+        assert args.file is None
+        assert args.qty is None
+
+        with open(args.yaml, "r") as stream:
+            try:
+                yaml_conf = yaml.safe_load(stream)
+            except yaml.YAMLError as exc:
+                print(exc)
+        rects = {}
+        for conf in yaml_conf.keys():
+            element = yaml_conf[conf]
+            print('element', element)
+            qty = 1
+            for k in element:
+                print('k', k)
+                if 'path' in k:
+                    file = k['path']
+                    print(file)
+                if 'qty' in k:
+                    qty = k['qty']
+            rects = read_file(file, rects=rects, mul=qty)
+
     fig = plt.figure()
     packers = []
     bins = 0
