@@ -5,7 +5,7 @@ from matplotlib.patches import Rectangle
 import yaml
 
 
-def read_file(file, rects={}, mul=1):
+def read_file(file, rects={}, mul=1, extra_name=''):
     ESPESOR_SIERRA = 5
     assert mul > 0
     with open(file, newline='') as csvfile:
@@ -14,7 +14,7 @@ def read_file(file, rects={}, mul=1):
             material = row[3]
             if material not in rects:
                 rects[material] = {}
-            name = row[5]
+            name = extra_name + row[5]
             assert name not in rects[material]
             rects[material][name] = {}
             height = row[0]
@@ -130,7 +130,7 @@ if __name__ == '__main__':
                     print(file)
                 if 'qty' in k:
                     qty = k['qty']
-            rects = read_file(file, rects=rects, mul=qty)
+            rects = read_file(file, rects=rects, mul=qty, extra_name=conf)
 
     fig = plt.figure()
     packers = []
