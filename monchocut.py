@@ -56,7 +56,7 @@ def analyse_packer(packer):
     return max(bins) + 1
 
 
-def init_subplot(offset, size):
+def init_subplot(bins, offset, size, material):
     fig.add_subplot(1, bins, offset + 1).title.set_text(material)
     ax = plt.gca()
     ax.plot(*size)
@@ -71,7 +71,7 @@ def init_subplot(offset, size):
 def plot_packer(bins, offset, material, packer):
     BIN_SIZE = (1830, 2600)
 
-    ax = init_subplot(offset, BIN_SIZE)
+    ax = init_subplot(bins, offset, BIN_SIZE, material)
 
     last_b = 0
     offset_rt = offset
@@ -80,7 +80,7 @@ def plot_packer(bins, offset, material, packer):
         # print(f"Bin {b}, Pieza {name}: {w}x{h} en posición ({x}, {y})")
         if b > last_b:
             offset_rt += 1
-            ax = init_subplot(offset_rt, BIN_SIZE)
+            ax = init_subplot(bins, offset_rt, BIN_SIZE, material)
             last_b = b
         ax.add_patch(Rectangle((x, y), w, h,
                                edgecolor='orange',
