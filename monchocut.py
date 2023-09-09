@@ -14,7 +14,7 @@ def read_file(file, rects={}, mul=1, extra_name=''):
             material = row[3]
             if material not in rects:
                 rects[material] = {}
-            name = extra_name + row[5]
+            name = extra_name + '_' + row[5]
             assert name not in rects[material]
             rects[material][name] = {}
             height = row[0]
