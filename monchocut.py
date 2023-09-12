@@ -25,7 +25,8 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
                 material = row[3]
             if material not in rects:
                 rects[material] = {}
-            name = ', '.join([extra_name + '%' + a for a in row[5].split(', ')])
+            pre_name = extra_name + '%'
+            name = ', '.join([pre_name + a for a in row[5].split(', ')])
             assert name not in rects[material]
             rects[material][name] = {}
             height = row[0]
@@ -109,8 +110,7 @@ def plot_packer(bins, offset, material, packer):
             ax = init_subplot(bins, offset_rt, BIN_SIZE, material)
             last_b = b
         ax.add_patch(Rectangle((x, y), w, h,
-                               edgecolor='white', # colors[obj],
-                               #    facecolor='none',
+                               edgecolor='white',
                                facecolor=colors[obj],
                                linewidth=1,
                                ))
