@@ -34,7 +34,7 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
             rects[material][name]['height'] = float(height) + ESPESOR_SIERRA
             width = row[1]
             rects[material][name]['width'] = float(width) + ESPESOR_SIERRA
-            rects[material][name]['qty'] = int(row[2]) * mul
+            rects[material][name]['mul'] = mul
             rects[material][name]['cantos'] = ['none', 'none', 'none', 'none']
             for j in range(4):
                 canto = row[12 + j]
@@ -55,7 +55,7 @@ def rect_pack(pieces):
     for piece in pieces.keys():
         # print(piece)
         for name in piece.split(', '):
-            for q in range(pieces[piece]['qty']):
+            for q in range(pieces[piece]['mul']):
                 w = pieces[piece]['width']
                 h = pieces[piece]['height']
                 if q > 1:
@@ -125,7 +125,7 @@ def plot_packer(bins, offset, material, packer):
     return offset_rt + 1
 
 
-def write_excel(workbook, material, rects):
+def write_excel(workbook, material, rects, cm):
     worksheet = workbook.add_worksheet(material)
 
     header = ["Nombre", "Altura", "Anchura", "Cantidad",
@@ -141,9 +141,14 @@ def write_excel(workbook, material, rects):
     for row, rect in enumerate(rects.items()):
         name = rect[0]
         data_dict = rect[1]
-        height = data_dict['height']
-        width = data_dict['width']
-        qty = data_dict['qty']
+        if cm:
+            height = int(data_dict['height']) / 10
+            width = int(data_dict['width']) / 10
+        else:
+            height = data_dict['height']
+            width = data_dict['width']
+        mul = data_dict['mul']
+        qty = mul * len(name.split(', '))
         cantos = data_dict['cantos']
         items_to_write = (name, height, width, qty, *cantos)
         for col, item in enumerate(items_to_write):
@@ -162,6 +167,8 @@ if __name__ == '__main__':
                         help="Yaml conf.")
     parser.add_argument("--excel", action='store_true',
                         help="Export Excel file.")
+    parser.add_argument("--cm", action='store_true',
+                        help="Use centimeters in exported Excel file.")
 
     args = parser.parse_args()
 
@@ -212,7 +219,7 @@ if __name__ == '__main__':
         packers.append(packer)
         bins += analyse_packer(packer)
         if args.excel:
-            write_excel(workbook, material, rects[material])
+            write_excel(workbook, material, rects[material], args.cm)
 
     if args.excel:
         workbook.close()

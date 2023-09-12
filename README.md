@@ -88,3 +88,9 @@ excel will be generated, with one tab for each Material.
 ```bash
 venv/bin/python monchocut.py --yaml config.yaml --excel
 ```
+
+Y you need the dimenssions in centimeters, you can do
+
+```bash
+venv/bin/python monchocut.py --yaml config.yaml --excel --cm
+```
