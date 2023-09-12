@@ -4,13 +4,14 @@ from rectpack import newPacker
 # https://github.com/secnot/rectpack/blob/master/rectpack/maxrects.py
 #  - MaxRects
 #  - MaxRectsBl
-#  - MaxRectsBssf
-#  - MaxRectsBaf
+#  - MaxRectsBssf <- Default
+#  - MaxRectsBaf <- Which I see as more aligning optimized
 #  - MaxRectsBlsf
-from rectpack.maxrects import MaxRectsBssf as maxrect
+from rectpack.maxrects import MaxRectsBaf as maxrect
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import yaml
+from xlsxwriter import Workbook
 
 
 def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
@@ -33,7 +34,14 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
             rects[material][name]['height'] = float(height) + ESPESOR_SIERRA
             width = row[1]
             rects[material][name]['width'] = float(width) + ESPESOR_SIERRA
-            rects[material][name]['qty'] = mul
+            rects[material][name]['qty'] = int(row[2]) * mul
+            rects[material][name]['cantos'] = ['none', 'none', 'none', 'none']
+            for j in range(4):
+                canto = row[12 + j]
+                if canto in equivalences:
+                    rects[material][name]['cantos'][j] = equivalences[canto]
+                else:
+                    rects[material][name]['cantos'][j] = canto
     return rects
 
 
@@ -117,6 +125,31 @@ def plot_packer(bins, offset, material, packer):
     return offset_rt + 1
 
 
+def write_excel(workbook, material, rects):
+    worksheet = workbook.add_worksheet(material)
+
+    header = ["Nombre", "Altura", "Anchura", "Cantidad",
+              "canto_1", "canto_2", "canto_3", "canto_4"]
+
+    # write_header
+    row = 0
+    for col, item in enumerate(header):
+        worksheet.write(row, col, item)
+
+    row_offset = 1
+    col_offset = 0
+    for row, rect in enumerate(rects.items()):
+        name = rect[0]
+        data_dict = rect[1]
+        height = data_dict['height']
+        width = data_dict['width']
+        qty = data_dict['qty']
+        cantos = data_dict['cantos']
+        items_to_write = (name, height, width, qty, *cantos)
+        for col, item in enumerate(items_to_write):
+            worksheet.write(row + row_offset, col + col_offset, item)
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -127,6 +160,8 @@ if __name__ == '__main__':
                         help="Multiple.")
     parser.add_argument("--yaml", type=str, default=None,
                         help="Yaml conf.")
+    parser.add_argument("--excel", action='store_true',
+                        help="Export Excel file.")
 
     args = parser.parse_args()
 
@@ -166,10 +201,21 @@ if __name__ == '__main__':
     fig = plt.figure()
     packers = []
     bins = 0
+
+    # Get total of used bins to set the following subplots
+    # In addition, if asked, one excel is generated for each material
+    if args.excel:
+        workbook = Workbook('placas.xlsx')
+
     for i, material in enumerate(rects.keys()):
         packer = rect_pack(rects[material])
         packers.append(packer)
         bins += analyse_packer(packer)
+        if args.excel:
+            write_excel(workbook, material, rects[material])
+
+    if args.excel:
+        workbook.close()
 
     offset = 0
     for i, material in enumerate(rects.keys()):

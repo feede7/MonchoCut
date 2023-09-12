@@ -8,7 +8,7 @@ matplotlib
 # Venv
 ```bash
 python3 -m venv venv
-venv/bin/python -m pip install -U pip rectpack matplotlib pyyaml --no-cache-dir
+venv/bin/python -m pip install -U pip rectpack matplotlib pyyaml xlsxwriter --no-cache-dir
 ```
 
 If you're in Windows Bash, perhaps you hav to replace all the:
@@ -78,4 +78,13 @@ name, you can indicate that on the YAML begining as follows:
 equivalences:
   - material_A_1: material_A
   - material_A_2: material_A
+```
+
+# Excel file exporting
+
+You can run the script with the `excel` flag, and an
+excel will be generated, with one tab for each Material.
+
+```bash
+venv/bin/python monchocut.py --yaml config.yaml --excel
 ```
