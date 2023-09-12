@@ -1,20 +1,31 @@
 import csv
 from rectpack import newPacker
+# Possible optimizing algorithims:
+# https://github.com/secnot/rectpack/blob/master/rectpack/maxrects.py
+#  - MaxRects
+#  - MaxRectsBl
+#  - MaxRectsBssf
+#  - MaxRectsBaf
+#  - MaxRectsBlsf
+from rectpack.maxrects import MaxRectsBssf as maxrect
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 import yaml
 
 
-def read_file(file, rects={}, mul=1, extra_name=''):
+def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
     ESPESOR_SIERRA = 5
     assert mul > 0
     with open(file, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         for row in spamreader:
-            material = row[3]
+            if row[3] in equivalences:
+                material = equivalences[row[3]]
+            else:
+                material = row[3]
             if material not in rects:
                 rects[material] = {}
-            name = extra_name + '_' + row[5]
+            name = ', '.join([extra_name + '%' + a for a in row[5].split(', ')])
             assert name not in rects[material]
             rects[material][name] = {}
             height = row[0]
@@ -28,7 +39,7 @@ def read_file(file, rects={}, mul=1, extra_name=''):
 def rect_pack(pieces):
     BIN_SIZE = (1830, 2600)
 
-    packer = newPacker(rotation=True)
+    packer = newPacker(pack_algo=maxrect, rotation=True)
 
     packer.add_bin(*BIN_SIZE, count=float("inf"))
 
@@ -69,22 +80,38 @@ def init_subplot(bins, offset, size, material):
 
 
 def plot_packer(bins, offset, material, packer):
+    from PIL.ImageColor import colormap
+    from random import choice
+
     BIN_SIZE = (1830, 2600)
+
+    exclude_colors = ['snow', 'lavender', 'lavenderblush', 'lightgrey',
+                      'blanchedalmond', 'ghostwhite', 'mintcream', 'ivory',
+                      'white']
 
     ax = init_subplot(bins, offset, BIN_SIZE, material)
 
     last_b = 0
     offset_rt = offset
+
+    colors = {}
     for rect in packer.rect_list():
         b, x, y, w, h, name = rect
-        # print(f"Bin {b}, Pieza {name}: {w}x{h} en posición ({x}, {y})")
+        obj = name.split('%')[0]
+        if obj not in colors:
+            while True:
+                rnd_color = choice(list(colormap.keys()))
+                if rnd_color not in exclude_colors:
+                    break
+            colors[obj] = rnd_color
         if b > last_b:
             offset_rt += 1
             ax = init_subplot(bins, offset_rt, BIN_SIZE, material)
             last_b = b
         ax.add_patch(Rectangle((x, y), w, h,
-                               edgecolor='orange',
-                               facecolor='none',
+                               edgecolor='white', # colors[obj],
+                               #    facecolor='none',
+                               facecolor=colors[obj],
                                linewidth=1,
                                ))
     return offset_rt + 1
@@ -107,7 +134,6 @@ if __name__ == '__main__':
         assert args.file is not None
         qty = args.qty or 1
 
-        print(args.file)
         rects = read_file(args.file, mul=qty)
     else:
         assert args.file is None
@@ -119,15 +145,23 @@ if __name__ == '__main__':
             except yaml.YAMLError as exc:
                 print(exc)
         rects = {}
+        equivalences = {}
         for conf in yaml_conf.keys():
             element = yaml_conf[conf]
-            qty = 1
-            for k in element:
-                if 'path' in k:
-                    file = k['path']
-                if 'qty' in k:
-                    qty = k['qty']
-            rects = read_file(file, rects=rects, mul=qty, extra_name=conf)
+            if conf == 'equivalences':
+                for k in element:
+                    mat = list(k)[0]
+                    assert mat not in equivalences
+                    equivalences[mat] = k[mat]
+            else:
+                qty = 1
+                for k in element:
+                    if 'path' in k:
+                        file = k['path']
+                    if 'qty' in k:
+                        qty = k['qty']
+                rects = read_file(file, rects=rects, mul=qty,
+                                  extra_name=conf, equivalences=equivalences)
 
     fig = plt.figure()
     packers = []

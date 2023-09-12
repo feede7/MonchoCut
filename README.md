@@ -68,3 +68,14 @@ Then run:
 ```bash
 venv/bin/python monchocut.py --yaml config.yaml
 ```
+
+# Using Material Equivalences
+
+If you have serveral objects with same kind of material but with different
+name, you can indicate that on the YAML begining as follows:
+
+```yaml
+equivalences:
+  - material_A_1: material_A
+  - material_A_2: material_A
+```
