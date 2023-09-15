@@ -128,8 +128,9 @@ def plot_packer(bins, offset, material, packer):
 def write_excel(workbook, material, rects, cm):
     worksheet = workbook.add_worksheet(material)
 
-    header = ["Nombre", "Altura", "Anchura", "Cantidad",
-              "canto_1", "canto_2", "canto_3", "canto_4"]
+    # Baumann like
+    header = ["Cantidad", "Altura", "Anchura", "ID", "Material", "Rota",
+              "canto_1", "canto_2", "canto_3", "canto_4", "Nombre"]
 
     # write_header
     row = 0
@@ -150,7 +151,15 @@ def write_excel(workbook, material, rects, cm):
         mul = data_dict['mul']
         qty = mul * len(name.split(', '))
         cantos = data_dict['cantos']
-        items_to_write = (name, height, width, qty, *cantos)
+        if cantos[0] == '' and cantos[1] != '':
+            aux = cantos[1]
+            cantos[1] = cantos[0]
+            cantos[0] = aux
+        if cantos[2] == '' and cantos[3] != '':
+            aux = cantos[3]
+            cantos[3] = cantos[2]
+            cantos[2] = aux
+        items_to_write = (qty, height, width, row, material, 1, *cantos, name)
         for col, item in enumerate(items_to_write):
             worksheet.write(row + row_offset, col + col_offset, item)
 
