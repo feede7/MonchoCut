@@ -1,4 +1,9 @@
 import csv
+import yaml
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
+from xlsxwriter import Workbook
+
 from rectpack import newPacker
 # Possible optimizing algorithims:
 # https://github.com/secnot/rectpack/blob/master/rectpack/maxrects.py
@@ -7,11 +12,30 @@ from rectpack import newPacker
 #  - MaxRectsBssf <- Default
 #  - MaxRectsBaf <- Which I see as more aligning optimized
 #  - MaxRectsBlsf
-from rectpack.maxrects import MaxRectsBaf as maxrect
-import matplotlib.pyplot as plt
-from matplotlib.patches import Rectangle
-import yaml
-from xlsxwriter import Workbook
+# from rectpack.maxrects import MaxRectsBaf as algorithm
+
+# https://github.com/secnot/rectpack/blob/master/rectpack/guillotine.py
+# Guillotine algorithms GUILLOTINE-RECT-SPLIT, Selecting one
+# Axis split, and one selection criteria.
+# GuillotineBssfSas
+# GuillotineBssfLas
+# GuillotineBssfSlas
+# GuillotineBssfLlas
+# GuillotineBssfMaxas
+# GuillotineBssfMinas
+# GuillotineBlsfSas
+# GuillotineBlsfLas
+# GuillotineBlsfSlas
+# GuillotineBlsfLlas
+# GuillotineBlsfMaxas
+# GuillotineBlsfMinas
+# GuillotineBafSas
+# GuillotineBafLas
+# GuillotineBafSlas
+# GuillotineBafLlas
+# GuillotineBafMaxas
+# GuillotineBafMinas
+from rectpack.guillotine import GuillotineBssfSlas as algorithm
 
 
 def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
@@ -48,7 +72,7 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
 def rect_pack(pieces):
     BIN_SIZE = (1830, 2600)
 
-    packer = newPacker(pack_algo=maxrect, rotation=True)
+    packer = newPacker(pack_algo=algorithm, rotation=True)
 
     packer.add_bin(*BIN_SIZE, count=float("inf"))
 
