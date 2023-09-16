@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 from xlsxwriter import Workbook
 
-from rectpack import newPacker
+from rectpack import newPacker, PackingBin
 # Possible optimizing algorithims:
 # https://github.com/secnot/rectpack/blob/master/rectpack/maxrects.py
 #  - MaxRects
@@ -69,15 +69,35 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
     return rects
 
 
-def rect_pack(pieces):
-    BIN_SIZE = (1830, 2600)
+def rect_pack(pieces, material, count=1):
+    BIN_SIZES = [(1830, 2600 // (2**j), (2**j)) for j in range(2)]
 
-    packer = newPacker(pack_algo=algorithm, rotation=True)
+    # PackingBin = Enum(["BNF", "BFF", "BBF", "Global"])
+    packer = newPacker(bin_algo=PackingBin.BBF, pack_algo=algorithm,
+                       rotation=True)
 
-    packer.add_bin(*BIN_SIZE, count=float("inf"))
+    if count is None:
+        loops = 1
+    else:
+        loops = count
+
+    for ll in range(loops):
+        for w, h, div in BIN_SIZES:
+            name = ''
+            if div == 1:
+                name = 'whole'
+            elif div == 2:
+                name = 'half'
+            elif div == 4:
+                name = 'quarter'
+            if count is None:
+                packer.add_bin(w, h, count=float("inf"),
+                               bid=f'{material}_{name}_{ll}')
+            else:
+                packer.add_bin(w, h, count=1,
+                               bid=f'{material}_{name}_{ll}')
 
     for piece in pieces.keys():
-        # print(piece)
         for name in piece.split(', '):
             for q in range(pieces[piece]['mul']):
                 w = pieces[piece]['width']
@@ -112,19 +132,56 @@ def init_subplot(bins, offset, size, material):
     return ax
 
 
-def plot_packer(bins, offset, material, packer):
+def plot_packers(packers):
     from PIL.ImageColor import colormap
     from random import choice
-
-    BIN_SIZE = (1830, 2600)
 
     exclude_colors = ['snow', 'lavender', 'lavenderblush', 'lightgrey',
                       'blanchedalmond', 'ghostwhite', 'mintcream', 'ivory',
                       'white']
 
-    ax = init_subplot(bins, offset, BIN_SIZE, material)
+    while True:
+        rnd_color = choice(list(colormap.keys()))
+        if rnd_color not in exclude_colors:
+            break
+    print(rnd_color)
+
+    # Amount of total bins
+    bins = 0
+    for packer in packers:
+        bins += len(packer)
+
+    offset = 0
+    for packer in packers:
+        for abin in packer:
+            ax = init_subplot(bins, offset,
+                              (abin.width, abin.height),
+                              abin.bid)
+            offset += 1
+            for rect in abin:
+                x = rect.x
+                y = rect.y
+                w = rect.width
+                h = rect.height
+                ax.add_patch(Rectangle((x, y), w, h,
+                             edgecolor='white',
+                             facecolor=rnd_color,
+                             linewidth=1))
+
+
+def plot_packer(bins, offset, packer):
+    from PIL.ImageColor import colormap
+    from random import choice
+
+    exclude_colors = ['snow', 'lavender', 'lavenderblush', 'lightgrey',
+                      'blanchedalmond', 'ghostwhite', 'mintcream', 'ivory',
+                      'white']
 
     last_b = 0
+    ax = init_subplot(bins, offset,
+                      (packer[last_b].width, packer[last_b].height),
+                      packer[last_b].bid)
+
     offset_rt = offset
 
     colors = {}
@@ -139,7 +196,9 @@ def plot_packer(bins, offset, material, packer):
             colors[obj] = rnd_color
         if b > last_b:
             offset_rt += 1
-            ax = init_subplot(bins, offset_rt, BIN_SIZE, material)
+            ax = init_subplot(bins, offset_rt,
+                              (packer[b].width, packer[b].height),
+                              packer[b].bid)
             last_b = b
         ax.add_patch(Rectangle((x, y), w, h,
                                edgecolor='white',
@@ -202,6 +261,8 @@ if __name__ == '__main__':
                         help="Export Excel file.")
     parser.add_argument("--cm", action='store_true',
                         help="Use centimeters in exported Excel file.")
+    parser.add_argument("--by_obj", action='store_true',
+                        help="Plot by objects in different colors.")
 
     args = parser.parse_args()
 
@@ -248,7 +309,7 @@ if __name__ == '__main__':
         workbook = Workbook('placas.xlsx')
 
     for i, material in enumerate(rects.keys()):
-        packer = rect_pack(rects[material])
+        packer = rect_pack(rects[material], material)
         packers.append(packer)
         bins += analyse_packer(packer)
         if args.excel:
@@ -257,7 +318,10 @@ if __name__ == '__main__':
     if args.excel:
         workbook.close()
 
-    offset = 0
-    for i, material in enumerate(rects.keys()):
-        offset = plot_packer(bins, offset, material, packers[i])
+    if args.by_obj:
+        offset = 0
+        for i, material in enumerate(rects.keys()):
+            offset = plot_packer(bins, offset, packers[i])
+    else:
+        plot_packers(packers)
     plt.show()
