@@ -39,7 +39,6 @@ from rectpack.guillotine import GuillotineBssfSlas as algorithm
 
 
 def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
-    ESPESOR_SIERRA = 5
     assert mul > 0
     with open(file, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
@@ -54,10 +53,10 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
             name = ', '.join([pre_name + a for a in row[5].split(', ')])
             assert name not in rects[material]
             rects[material][name] = {}
-            height = row[0]
-            rects[material][name]['height'] = float(height) + ESPESOR_SIERRA
-            width = row[1]
-            rects[material][name]['width'] = float(width) + ESPESOR_SIERRA
+            height = float(row[0])
+            rects[material][name]['height'] = height
+            width = float(row[1])
+            rects[material][name]['width'] = width
             rects[material][name]['mul'] = mul
             rects[material][name]['cantos'] = ['none', 'none', 'none', 'none']
             for j in range(4):
@@ -66,10 +65,15 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
                     rects[material][name]['cantos'][j] = equivalences[canto]
                 else:
                     rects[material][name]['cantos'][j] = canto
+            if rects[material][name]['cantos'] != ['', '', '', '']:
+                assert width >= 120, name
+                assert height >= 120, name
     return rects
 
 
-def rect_pack(pieces, material, count=1):
+def rect_pack(pieces, material, count=2):
+    ESPESOR_SIERRA = 5
+
     BIN_SIZES = [(1830, 2600 // (2**j), (2**j)) for j in range(2)]
 
     # PackingBin = Enum(["BNF", "BFF", "BBF", "Global"])
@@ -100,8 +104,8 @@ def rect_pack(pieces, material, count=1):
     for piece in pieces.keys():
         for name in piece.split(', '):
             for q in range(pieces[piece]['mul']):
-                w = pieces[piece]['width']
-                h = pieces[piece]['height']
+                w = pieces[piece]['width'] + ESPESOR_SIERRA
+                h = pieces[piece]['height'] + ESPESOR_SIERRA
                 if q > 1:
                     packer.add_rect(w, h, f'{q}_{name}')
                 else:
