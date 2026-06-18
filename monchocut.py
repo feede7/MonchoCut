@@ -42,7 +42,7 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
     assert mul > 0
     with open(file, newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
-        for row in spamreader:
+        for r, row in enumerate(spamreader):
             if row[3] in equivalences:
                 material = equivalences[row[3]]
             else:
@@ -51,7 +51,8 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
                 rects[material] = {}
             pre_name = extra_name + '%'
             name = ', '.join([pre_name + a for a in row[5].split(', ')])
-            assert name not in rects[material]
+            name += f'_{r}'
+            assert name not in rects[material], f'name: {name}, recs: {rects}, material: {material}'
             rects[material][name] = {}
             height = float(row[0])
             rects[material][name]['height'] = height
@@ -65,16 +66,22 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
                     rects[material][name]['cantos'][j] = equivalences[canto]
                 else:
                     rects[material][name]['cantos'][j] = canto
-            if rects[material][name]['cantos'] != ['', '', '', '']:
-                assert width >= 120, name
-                assert height >= 120, name
+            # if rects[material][name]['cantos'] != ['', '', '', '']:
+                # assert width >= 120, name
+                # assert height >= 120, name
     return rects
 
 
-def rect_pack(pieces, material, count=2):
+def rect_pack(pieces, material, count=1):
     ESPESOR_SIERRA = 5
 
-    BIN_SIZES = [(1830, 2600 // (2**j), (2**j)) for j in range(2)]
+    # BIN_SIZES = [(1830, 2600 // (2**j), (2**j)) for j in range(2)]
+    BIN_SIZES = [(1830, 2600 // 1, 1),
+                 (1830, 2600 // 1, 1),
+                 (1830, 2600 // 1, 1),
+                 (1830, 2600 // 2, 2),
+                 (1830, 2600 // 2, 2),
+                 ]
 
     # PackingBin = Enum(["BNF", "BFF", "BBF", "Global"])
     packer = newPacker(bin_algo=PackingBin.BBF, pack_algo=algorithm,
@@ -238,6 +245,10 @@ def write_excel(workbook, material, rects, cm):
         mul = data_dict['mul']
         qty = mul * len(name.split(', '))
         cantos = data_dict['cantos']
+        if "Puerta" in name:
+            cantos = ['X'] * 4
+        if cantos.count('X') == 1:
+            cantos = ['X', '', '', '']
         if cantos[0] == '' and cantos[1] != '':
             aux = cantos[1]
             cantos[1] = cantos[0]
@@ -293,6 +304,7 @@ if __name__ == '__main__':
                     mat = list(k)[0]
                     assert mat not in equivalences
                     equivalences[mat] = k[mat]
+                    print(f'instead {mat} I will use {k[mat]}')
             else:
                 qty = 1
                 for k in element:
