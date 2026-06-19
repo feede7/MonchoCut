@@ -247,8 +247,6 @@ def write_excel(workbook, material, rects, cm):
         cantos = data_dict['cantos']
         if "Puerta" in name:
             cantos = ['X'] * 4
-        if cantos.count('X') == 1:
-            cantos = ['X', '', '', '']
         if cantos[0] == '' and cantos[1] != '':
             aux = cantos[1]
             cantos[1] = cantos[0]
