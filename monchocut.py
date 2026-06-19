@@ -52,7 +52,8 @@ def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
             pre_name = extra_name + '%'
             name = ', '.join([pre_name + a for a in row[5].split(', ')])
             name += f'_{r}'
-            assert name not in rects[material], f'name: {name}, recs: {rects}, material: {material}'
+            msg = f'name: {name}, recs: {rects}, material: {material}'
+            assert name not in rects[material], msg
             rects[material][name] = {}
             height = float(row[0])
             rects[material][name]['height'] = height
