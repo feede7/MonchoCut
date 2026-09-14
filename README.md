@@ -5,6 +5,13 @@ All you need to Cut by Moncho a wood!
 rectpack
 matplotlib
 
+# Bash
+
+```bash
+sudo apt update
+sudo apt install python3.14-venv python3-tk
+```
+
 # Venv
 ```bash
 python3 -m venv venv
