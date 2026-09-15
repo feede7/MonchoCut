@@ -40,7 +40,7 @@ from rectpack.guillotine import GuillotineBssfSlas as algorithm
 
 def read_file(file, rects={}, mul=1, extra_name='', equivalences={}):
     assert mul > 0
-    with open(file, newline='') as csvfile:
+    with open(file, mode='r', encoding='utf-8', errors='replace', newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         for r, row in enumerate(spamreader):
             if row[3] in equivalences:
